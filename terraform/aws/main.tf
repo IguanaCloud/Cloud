@@ -1,65 +1,75 @@
-provider "google" {
-  credentials = file("credentials.json")
-  project     = "cryptic-album-424009-a2"
-  region      = "us-central1"
-  zone        = "us-central1-c"
+provider "aws" {
+  region = "us-west-2"
 }
 
-# Створення нової мережі
-resource "google_compute_network" "vpc_network" {
-  name                    = "my-vpc-network"
-  auto_create_subnetworks = "true"
-}
+resource "aws_instance" "example" {
+  ami           = "ami-0c55b159cbfafe1f0" # Amazon Linux 2 AMI
+  instance_type = "t2.micro"
 
-# Правило брандмауера для дозволу SSH трафіку
-resource "google_compute_firewall" "allow_ssh" {
-  name    = "allow-ssh"
-  network = google_compute_network.vpc_network.name
-
-  allow {
-    protocol = "tcp"
-    ports    = ["22"]
+  tags = {
+    Name = "nginx-server"
   }
 
-  source_ranges = ["0.0.0.0/0"]
-}
+  provisioner "remote-exec" {
+    inline = [
+      "sudo yum update -y",
+      "sudo amazon-linux-extras install nginx1.12 -y",
+      "sudo systemctl start nginx",
+      "sudo systemctl enable nginx"
+    ]
 
-# Створення інстансу з використанням нової мережі
-resource "google_compute_instance" "ubuntu_instance" {
-  name         = "ubuntu-instance"
-  machine_type = "e2-medium"
-
-  boot_disk {
-    initialize_params {
-      image = "projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20240519"
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = file("<path_to_your_private_key>")
+      host        = self.public_ip
     }
   }
 
-  network_interface {
-    network = google_compute_network.vpc_network.self_link
+  provisioner "file" {
+    source      = "index.html"
+    destination = "/tmp/index.html"
 
-    access_config {
-      // Ephemeral public IP
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = file("<path_to_your_private_key>")
+      host        = self.public_ip
     }
   }
 
-  tags = ["web", "dev"]
+  provisioner "remote-exec" {
+    inline = [
+      "sudo mv /tmp/index.html /usr/share/nginx/html/index.html"
+    ]
 
-  metadata_startup_script = <<-EOT
-    #! /bin/bash
-    sudo apt-get update
-    sudo apt-get -y upgrade
-
-    # Встановлення Terraform
-    sudo apt-get install -y wget unzip
-    wget https://releases.hashicorp.com/terraform/1.5.1/terraform_1.5.1_linux_amd64.zip
-    unzip terraform_1.5.1_linux_amd64.zip
-    sudo mv terraform /usr/local/bin/
-    terraform --version
-  EOT
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = file("<path_to_your_private_key>")
+      host        = self.public_ip
+    }
+  }
 }
 
-output "instance_ip" {
-  value = google_compute_instance.ubuntu_instance.network_interface[0].access_config[0].nat_ip
-}
+resource "aws_security_group" "nginx_sg" {
+  name_prefix = "nginx_sg"
 
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "nginx_sg"
+  }
+}
