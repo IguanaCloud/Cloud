@@ -1,0 +1,12 @@
+# Ignore enviroment folder
+*venv/
+
+# Ignore __pycache__
+**/__pycache__/
+
+data
+**/.DS_Store
+
+# Ignore only in root dir 
+/.env
+/.env-mongo
