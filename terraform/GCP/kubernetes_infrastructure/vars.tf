@@ -45,6 +45,16 @@ variable "region_additional" {
   type        = string
 }
 
+variable "vpc_network" {
+  description = "The name of the VPC network"
+  type        = string
+}
+
+variable "sub_network" {
+  description = "The name of the subnetwork"
+  type        = string
+}
+
 locals {
   full_name               = "${var.env}-${var.region}-${var.app}"
   additional_app_vpc_name = "${var.env}-${var.region_additional}-${var.app_additional}"

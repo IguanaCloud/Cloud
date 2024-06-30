@@ -37,6 +37,7 @@ variable "image_type" {
   description = "The image type for the load balancer instances"
   type        = string
 }
+
 variable "zone" {
   description = "The zone where resources will be created"
   type        = string

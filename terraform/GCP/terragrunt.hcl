@@ -12,45 +12,41 @@ terraform {
 }
 
 inputs = {
-  project                      = "iconic-ducking-9999-n0" #example name of the project
-  env                          = "dev-01"
+  project                      = "iguana-dev-env"
+  env                          = "dev"
   region                       = "us-central1"
   zone                         = "us-central1-a"
-  app                          = "geo"
+  app                          = "iguana"
   image_type                   = "debian-cloud/debian-11"
-  vpc_network                  = "default"
-  sub_network                  = "default"
-  vpc_id                       = "projects/iconic-ducking-9999-n0/global/networks/default"
+  vpc_network                  = "dev-us-central1-iguana-vpc-cluster"
+  sub_network                  = "dev-us-central1-iguana-subnet-cluster"
+  vpc_id                       = "projects/iguana-dev-env/global/networks/dev-us-central1-iguana-vpc-cluster"
   deletion_protection          = false
-  jenkins_instance_type        = "e2-medium"
-  jenkins_disk_size            = 50
-  jfrog_instance_type          = "e2-medium"
-  jfrog_disk_size              = 50
-  jfrog_registry_instance_type = "e2-medium"
-  jfrog_registry_disk_size     = 50
-  prometheus_instance_type     = "e2-medium"
-  prometheus_disk_size         = 50
   db_disk_size                 = 20
   db_instance_type             = "db-f1-micro"
-  lb_instance_type             = "e2-medium"
-  create_private_ip_address    = false
+  lb_instance_type             = "e2-small"
+  create_private_ip_address    = true
   enable_secret_manager        = true
-  allowed_ips                  = ["0.0.0.0/0"]
-  instance_type                = "e2-medium"
+  instance_type                = "e2-small"
   disk_size                    = 50
   gke_num_nodes                = 3
   gke_disk_size                = 20
   app_additional               = "gitea"
   region_additional            = "us-west1"
-  create_private_ip_address    = true
-  database_subnet_cidr_range   = "10.3.6.0/24"
-  database_allowed_ports       = ["5432"]
-  database_allowed_source_ranges = ["10.0.0.0/8"]
-  
-  # variables for load balancer geo module
-  lb_geo_subnet_cidr_range     = "10.3.7.0/24"
-  lb_geo_allowed_ports         = ["80", "443"]
-  lb_geo_allowed_source_ranges = ["0.0.0.0/0"]
+
+  allowed_ips                  = local.sensitive_vars.allowed_ips
+  database_subnet_cidr_range   = local.sensitive_vars.database_subnet_cidr_range
+  database_allowed_ports       = local.sensitive_vars.database_allowed_ports
+  database_allowed_source_ranges = local.sensitive_vars.database_allowed_source_ranges
+  lb_geo_subnet_cidr_range     = local.sensitive_vars.lb_geo_subnet_cidr_range
+  lb_geo_allowed_ports         = local.sensitive_vars.lb_geo_allowed_ports
+  lb_geo_allowed_source_ranges = local.sensitive_vars.lb_geo_allowed_source_ranges
+  gke_subnet_cidr              = local.sensitive_vars.gke_subnet_cidr
+  vm_subnet_cidr               = local.sensitive_vars.vm_subnet_cidr
+  allowed_ports                = local.sensitive_vars.allowed_ports
+  allowed_source_ranges        = local.sensitive_vars.allowed_source_ranges
+
+  secrets                      = local.secrets
 }
 
 generate "provider" {
@@ -58,15 +54,17 @@ generate "provider" {
   if_exists = "overwrite"
   contents  = <<EOF
 provider "google" {
-  project = var.project
-  region  = var.region
-  zone    = var.zone
+  project     = var.project
+  region      = var.region
+  zone        = var.zone
+  credentials = file("C:/Users/anton/Desktop/geocity-main/iguana-dev-env-a78c1cef537d.json")
 }
 
 provider "google-beta" {
-  project = var.project
-  region  = var.region
-  zone    = var.zone
+  project     = var.project
+  region      = var.region
+  zone        = var.zone
+  credentials = file("C:/Users/anton/Desktop/geocity-main/iguana-dev-env-a78c1cef537d.json")
 }
 EOF
 }
@@ -77,9 +75,31 @@ generate "backend" {
   contents  = <<EOF
 terraform {
   backend "gcs" {
-    bucket = "unique-project-geo-tf-state"
-    prefix = "terraform/${path_relative_to_include()}"
+    bucket      = "iguana-dev-env-tf-state"
+    prefix      = "terraform/${path_relative_to_include()}"
+    credentials = "C:/Users/anton/Desktop/geocity-main/iguana-dev-env-a78c1cef537d.json"
   }
 }
+EOF
+}
+
+generate "secrets" {
+  path      = "secrets.tf"
+  if_exists = "overwrite"
+  contents  = <<EOF
+%{ for secret_key, secret_value in local.secrets }
+resource "google_secret_manager_secret" "${secret_key}" {
+  secret_id = "${secret_value.secret_id}"
+  
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "${secret_key}" {
+  secret = google_secret_manager_secret.${secret_key}.id
+  secret_data = "${secret_value.secret_data}"
+}
+%{ endfor }
 EOF
 }
