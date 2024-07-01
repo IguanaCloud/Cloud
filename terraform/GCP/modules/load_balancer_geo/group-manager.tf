@@ -1,5 +1,5 @@
 resource "google_compute_region_instance_group_manager" "geo" {
-  name               = "${var.env}-${var.region}-${var.app}-geocitizen-group-manager"
+  name               = "${var.env}-${var.region}-${var.app}-geo-group-manager"
   base_instance_name = "${var.env}-${var.region}-${var.app}-webapp-application"
   region             = var.region
 
