@@ -1,34 +1,30 @@
 resource "google_sql_database_instance" "postgres" {
   project             = var.project
   name                = "${var.env}-${var.region}-${var.app}-postgres"
-  database_version    = "POSTGRES_15"
+  database_version    = "POSTGRES_13"
   region              = var.region
   deletion_protection = false
 
-  settings {
-    tier = "db-f1-micro"
-    ip_configuration {
-      ipv4_enabled = true
-      authorized_networks {
-        name  = "allow-all"
-        value = "0.0.0.0/0"
-      }
-    }
-  }
+  depends_on = [google_service_networking_connection.private_vpc_connection]
 
-  timeouts {
-    create = "30m"
-    delete = "30m"
+  settings {
+    tier = var.db_instance_type
+    disk_size = var.db_disk_size
+    
+    ip_configuration {
+      ipv4_enabled    = false
+      private_network = var.vpc_id
+    }
   }
 }
 
 resource "google_sql_database" "database" {
-  name     = "citizen-db"
+  name     = "${var.app}-db"
   instance = google_sql_database_instance.postgres.name
 }
 
 resource "google_sql_user" "users" {
-  name     = "citizen-user"
+  name     = "${var.app}-user"
   instance = google_sql_database_instance.postgres.name
   password = random_password.db_user_pass.result
 }
