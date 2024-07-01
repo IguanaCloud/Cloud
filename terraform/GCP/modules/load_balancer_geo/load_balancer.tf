@@ -16,8 +16,6 @@ resource "google_compute_forwarding_rule" "geo" {
   load_balancing_scheme = "EXTERNAL_MANAGED"
   port_range            = "443"
   target                = google_compute_region_target_https_proxy.geo.id
-  network               = var.vpc_network
-  subnetwork            = var.sub_network
   ip_address            = google_compute_address.load_balancer.address
   depends_on            = [google_compute_subnetwork.proxy_subnet]
 }
