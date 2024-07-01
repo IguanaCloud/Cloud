@@ -13,7 +13,7 @@ resource "google_compute_forwarding_rule" "geo" {
   name                  = "${var.env}-${var.region}-${var.app}-geocitizen-forwarding-rule"
   region                = var.region
   ip_protocol           = "TCP"
-  load_balancing_scheme = "INTERNAL_MANAGED"
+  load_balancing_scheme = "EXTERNAL_MANAGED"
   port_range            = "80"
   target                = google_compute_region_target_https_proxy.geo.id
   network               = var.vpc_network
