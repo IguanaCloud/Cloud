@@ -22,10 +22,11 @@ resource "google_compute_forwarding_rule" "geo" {
   depends_on            = [google_compute_subnetwork.proxy_subnet]
 }
 
-resource "google_compute_region_target_http_proxy" "geo" {
+resource "google_compute_region_target_https_proxy" "geo" {
   project = var.project
   name    = "${var.env}-${var.region}-${var.app}-geocitizen-proxy"
   url_map = google_compute_region_url_map.geo.id
+  ssl_certificates = [google_compute_region_ssl_certificate.iguana.id]
   region  = var.region
 }
 
@@ -42,4 +43,18 @@ resource "google_compute_address" "load_balancer" {
   address_type = "INTERNAL"
   region       = var.region
   subnetwork   = var.sub_network
+}
+
+resource "google_compute_region_ssl_certificate" "iguana" {
+  name        = "${var.env}-${var.region}-${var.app}-ssl-certificate-for-iguana"
+  private_key = data.google_secret_manager_secret_version.private_key.secret_data
+  certificate = data.google_secret_manager_secret_version.certificate.secret_data
+}
+
+data "google_secret_manager_secret_version" "private_key" {
+  secret = "privkey"
+}
+
+data "google_secret_manager_secret_version" "certificate" {
+  secret = "fullchain"
 }
