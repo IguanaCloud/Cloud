@@ -38,11 +38,8 @@ resource "google_compute_region_url_map" "geo" {
 }
 
 resource "google_compute_address" "load_balancer" {
-  project      = var.project
-  name         = "${var.env}-${var.region}-${var.app}-geocitizen-ip-1"
-  address_type = "INTERNAL"
-  region       = var.region
-  subnetwork   = var.sub_network
+  name         = "${var.env}-${var.region}-${var.app}-geocitizen-ip"
+  network_tier = "STANDARD"
 }
 
 resource "google_compute_region_ssl_certificate" "iguana" {
