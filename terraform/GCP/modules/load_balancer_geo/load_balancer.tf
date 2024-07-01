@@ -14,7 +14,7 @@ resource "google_compute_forwarding_rule" "geo" {
   region                = var.region
   ip_protocol           = "TCP"
   load_balancing_scheme = "EXTERNAL_MANAGED"
-  port_range            = "80"
+  port_range            = "443"
   target                = google_compute_region_target_https_proxy.geo.id
   network               = var.vpc_network
   subnetwork            = var.sub_network
