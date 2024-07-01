@@ -9,36 +9,33 @@ resource "google_compute_subnetwork" "proxy_subnet" {
 }
 
 resource "google_compute_forwarding_rule" "geo" {
-  project               = var.project
-  name                  = "${var.env}-${var.region}-${var.app}-geocitizen-forwarding-rule"
-  region                = var.region
+  name                  = "${var.env}-${var.region}-${var.app}-geo-forwarding-rule"
   ip_protocol           = "TCP"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   port_range            = "443"
   target                = google_compute_region_target_https_proxy.geo.id
+  network               = var.vpc_network
   ip_address            = google_compute_address.load_balancer.address
+  network_tier          = "STANDARD"
   depends_on            = [google_compute_subnetwork.proxy_subnet]
 }
 
 resource "google_compute_region_target_https_proxy" "geo" {
-  project = var.project
-  name    = "${var.env}-${var.region}-${var.app}-geocitizen-proxy"
-  url_map = google_compute_region_url_map.geo.id
+  name             = "${var.env}-${var.region}-${var.app}-geo-proxy"
+  url_map          = google_compute_region_url_map.geo.id
   ssl_certificates = [google_compute_region_ssl_certificate.iguana.id]
-  region  = var.region
 }
 
 resource "google_compute_region_url_map" "geo" {
-  project         = var.project
-  name            = "${var.env}-${var.region}-${var.app}-geocitizen-map"
-  region          = var.region
+  name            = "${var.env}-${var.region}-${var.app}-geo-map"
   default_service = google_compute_region_backend_service.geo.id
 }
 
 resource "google_compute_address" "load_balancer" {
-  name         = "${var.env}-${var.region}-${var.app}-geocitizen-ip"
+  name         = "${var.env}-${var.region}-${var.app}-geo-ip-1"
   network_tier = "STANDARD"
 }
+
 
 resource "google_compute_region_ssl_certificate" "iguana" {
   name        = "${var.env}-${var.region}-${var.app}-ssl-certificate-for-iguana"
@@ -53,3 +50,4 @@ data "google_secret_manager_secret_version" "private_key" {
 data "google_secret_manager_secret_version" "certificate" {
   secret = "fullchain"
 }
+

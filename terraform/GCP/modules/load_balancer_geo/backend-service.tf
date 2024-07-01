@@ -3,14 +3,14 @@ resource "google_compute_region_backend_service" "geo" {
   load_balancing_scheme = "EXTERNAL_MANAGED"
 
   backend {
-    group           = google_compute_region_instance_group_manager.geo.instance_group
+    group           = google_compute_instance_group_manager.geo.instance_group
     balancing_mode  = "UTILIZATION"
     capacity_scaler = 1.0
     max_utilization = 0.8
   }
 
 
-  name        = "${var.env}-${var.region}-${var.app}-geocitizen-backend-service"
+  name        = "${var.env}-${var.region}-${var.app}-geo-backend-service"
   protocol    = "HTTP"
   timeout_sec = 10
 
