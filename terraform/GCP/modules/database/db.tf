@@ -3,7 +3,7 @@ resource "google_sql_database_instance" "postgres" {
   name                = "${var.env}-${var.region}-${var.app}-postgres"
   database_version    = "POSTGRES_13"
   region              = var.region
-  deletion_protection = true  # Protection enabled for the first instance
+  deletion_protection = false 
 
   depends_on = [google_service_networking_connection.private_vpc_connection]
 
@@ -23,7 +23,7 @@ resource "google_sql_database_instance" "goks_postgres" {
   name                = "${var.env}-${var.region}-${var.app}-goks-postgres"
   database_version    = "POSTGRES_13"
   region              = var.region
-  deletion_protection = false  # Protection disabled for the second instance
+  deletion_protection = false  
 
   depends_on = [google_service_networking_connection.private_vpc_connection]
 
