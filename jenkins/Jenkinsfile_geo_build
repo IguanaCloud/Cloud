@@ -13,7 +13,7 @@ pipeline {
     stages {
         stage('Clone') {
             steps {
-                git branch: 'main', url: "https://github.com/gogs/gogs"
+                git branch: 'main', url: "https://github.com/iguana-devops/geocity"
             }
         }
         stage('Add Credentials') {
