@@ -1,8 +1,7 @@
 variable "key_pair" {
-    type = string
-  
+  type = string
 }
+
 variable "subnet_id" {
-    type = string
-  
+  type = string
 }
