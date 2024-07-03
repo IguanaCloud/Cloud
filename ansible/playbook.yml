@@ -1,0 +1,13 @@
+
+---
+- name: deploy nginx
+  hosts: nginx
+  become: yes
+  vars:
+    proxy_pass_http: 192.168.0.0
+    certs_key_pass: "/etc/ssl/private/nginxkey.key" 
+    certs_pass: "/etc/ssl/certs/nginxcert.crt"
+
+
+  roles:
+   - nginx
