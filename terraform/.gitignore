@@ -1,0 +1,9 @@
+aws/creds.txt
+aws/infrustructure_terraform/.terragrunt-cache
+aws/infrustructure_terraform/modules/aws_instances/.terragrunt-cache
+aws/infrustructure_terraform/modules/aws_instances/.terraform.lock.hcl
+aws/infrustructure_terraform/modules/aws_key_pair/.terragrunt-cache
+aws/infrustructure_terraform/modules/aws_key_pair/.terraform.lock.hcl
+aws/infrustructure_terraform/modules/vpc/.terragrunt-cache
+aws/infrustructure_terraform/modules/vpc/.terraform.lock.hcl
+**/.DS_Store
