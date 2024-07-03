@@ -1,0 +1,70 @@
+pipeline {
+    agent any
+    tools {
+        jfrog 'jfrog-cli'
+        maven 'maven'
+    }
+    environment {
+        WORKING_DIR = "${WORKSPACE}/java-app"
+        COMMIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+        NEW_GIT_BRANCH = sh(script: "echo $GIT_BRANCH | sed -r 's|origin/||g'", returnStdout: true).trim()
+        NAME_ARTIFACT = "${BUILD_TAG}-citizen-${NEW_GIT_BRANCH}-${COMMIT_HASH}.war"
+    }
+    stages {
+        stage('Clone') {
+            steps {
+                git branch: 'main', url: "https://github.com/iguana-devops/geocity"
+            }
+        }
+    stages {
+        stage('add credentials') {
+            steps {
+                script {
+                    dir("${WORKING_DIR }/src/main/resources/") {
+                        withCredentials([
+                        file(
+                            credentialsId: 'properties',
+                            variable: 'test')
+                        ]) {
+                            sh 'cp "\$test" application.properties'
+                            sh "bash ${WORKSPACE}/Jenkins/scripts/env.sh"
+                        }
+                    }
+                }
+            }
+        }
+        stage('Build artifact') {
+            steps {
+                echo 'Maven build'
+                dir("${WORKING_DIR }") {
+                        sh 'mvn clean install'}
+            }
+        }
+        stage('Push') {
+            steps {
+                echo 'Push to jfrog repository'
+                dir("${WORKING_DIR }/target") {
+                    sh "echo ${NAME_ARTIFACT}"
+                    jf "rt u  citizen.war maven-repository/${NAME_ARTIFACT}"
+                }
+            }
+        }
+        stage('List of artifacts') {
+            steps {
+                script {
+                    echo 'List of artifacts'
+                    sh "rm -rf ${JENKINS_HOME }/search_output.txt"
+                    tee("${JENKINS_HOME }/search_output.txt") {
+                        jf 'rt s maven-repository/'}
+                    sh "bash ${WORKSPACE}/Jenkins/scripts/names.sh ${JENKINS_HOME}/search_output.txt"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
