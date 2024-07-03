@@ -45,18 +45,6 @@ pipeline {
                 }
             }
         }
-        stage('List of Artifacts') {
-            steps {
-                script {
-                    echo 'List of artifacts'
-                    sh "rm -rf ${JENKINS_HOME}/search_output.txt"
-                    tee("${JENKINS_HOME}/search_output.txt") {
-                        jf 'rt s maven-repository/'
-                    }
-                    sh "bash ${WORKSPACE}/Jenkins/scripts/names.sh ${JENKINS_HOME}/search_output.txt"
-                }
-            }
-        }
     }
     post {
         always {
