@@ -41,7 +41,7 @@ pipeline {
                 echo 'Push to JFrog repository'
                 dir("${WORKING_DIR}/target") {
                     sh "echo ${NAME_ARTIFACT}"
-                    jf "rt u citizen.war maven-repository/${NAME_ARTIFACT}"
+                    jf "rt u citizen.war geo-dev-maven-local/${NAME_ARTIFACT}"
                 }
             }
         }
