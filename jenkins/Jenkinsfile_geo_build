@@ -16,17 +16,11 @@ pipeline {
                 git branch: 'main', url: "https://github.com/gogs/gogs"
             }
         }
-    }
-    stages {
-        stage('add credentials') {
+        stage('Add Credentials') {
             steps {
                 script {
-                    dir("${WORKING_DIR }/src/main/resources/") {
-                        withCredentials([
-                        file(
-                            credentialsId: 'properties',
-                            variable: 'test')
-                        ]) {
+                    dir("${WORKING_DIR}/src/main/resources/") {
+                        withCredentials([file(credentialsId: 'properties', variable: 'test')]) {
                             sh 'cp "\$test" application.properties'
                             sh "bash ${WORKSPACE}/Jenkins/scripts/env.sh"
                         }
@@ -34,35 +28,36 @@ pipeline {
                 }
             }
         }
-        stage('Build artifact') {
+        stage('Build Artifact') {
             steps {
                 echo 'Maven build'
-                dir("${WORKING_DIR }") {
-                        sh 'mvn clean install'}
+                dir("${WORKING_DIR}") {
+                    sh 'mvn clean install'
+                }
             }
         }
         stage('Push') {
             steps {
-                echo 'Push to jfrog repository'
-                dir("${WORKING_DIR }/target") {
+                echo 'Push to JFrog repository'
+                dir("${WORKING_DIR}/target") {
                     sh "echo ${NAME_ARTIFACT}"
-                    jf "rt u  citizen.war maven-repository/${NAME_ARTIFACT}"
+                    jf "rt u citizen.war maven-repository/${NAME_ARTIFACT}"
                 }
             }
         }
-        stage('List of artifacts') {
+        stage('List of Artifacts') {
             steps {
                 script {
                     echo 'List of artifacts'
-                    sh "rm -rf ${JENKINS_HOME }/search_output.txt"
-                    tee("${JENKINS_HOME }/search_output.txt") {
-                        jf 'rt s maven-repository/'}
+                    sh "rm -rf ${JENKINS_HOME}/search_output.txt"
+                    tee("${JENKINS_HOME}/search_output.txt") {
+                        jf 'rt s maven-repository/'
+                    }
                     sh "bash ${WORKSPACE}/Jenkins/scripts/names.sh ${JENKINS_HOME}/search_output.txt"
                 }
             }
         }
     }
-
     post {
         always {
             cleanWs()
