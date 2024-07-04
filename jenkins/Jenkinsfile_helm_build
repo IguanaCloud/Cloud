@@ -16,7 +16,7 @@ pipeline {
             steps {
                 script {
                     dir('helm') {
-                        sh 'helm package .'
+                        sh 'helm package gogs-chart'
                     }
                 }
             }
