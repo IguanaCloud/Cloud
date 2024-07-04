@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+
+    environment {
+        JFROG_CLI_OFFER_CONFIG = "false"
+    }
+
+    stages {
+        stage('Clone') {
+            steps {
+                git branch: 'main', url: "https://github.com/CapybaraDevOps/gogs-infrastructure.git"
+            }
+        }
+
+        stage('Package Helm Chart') {
+            steps {
+                script {
+                    dir('helm') {
+                        sh 'helm package .'
+                    }
+                }
+            }
+        }
+
+        stage('Push Helm Chart') {
+            steps {
+                    script {
+                        dir('helm') {
+                            sh 'jfrog rt u "gogsapp-0.1.0.tgz" "gogs-helm-local/"'
+                    }
+                    }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
