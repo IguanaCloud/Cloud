@@ -15,7 +15,7 @@ pipeline {
         stage('Package Helm Chart') {
             steps {
                 script {
-                    dir('helm') {
+                    dir('gogs-infrastructure/helm/gogs-chart') {
                         sh 'helm package gogs-chart'
                     }
                 }
@@ -25,7 +25,7 @@ pipeline {
         stage('Push Helm Chart') {
             steps {
                     script {
-                        dir('helm') {
+                        dir('gogs-infrastructure/helm/gogs-chart') {
                             sh 'jfrog rt u "gogsapp-0.1.0.tgz" "gogs-helm-local/"'
                     }
                     }
