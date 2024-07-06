@@ -1,5 +1,5 @@
 resource "google_compute_autoscaler" "geo" {
-  name   = "${var.env}-${var.region}-${var.app}-geocitizen-autoscaler"
+  name   = "${local.full_name}-geocitizen-autoscaler"
   target = google_compute_instance_group_manager.geo.id
 
   autoscaling_policy {

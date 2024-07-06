@@ -12,7 +12,7 @@ terraform {
 }
 
 inputs = {
-  project                      = "iconic-ducking-9999-n0" #example name of the project
+  project                      = "iguana-dev-env" #example name of the project
   env                          = "dev-01"
   region                       = "us-central1"
   zone                         = "us-central1-a"
@@ -20,7 +20,7 @@ inputs = {
   image_type                   = "debian-cloud/debian-11"
   vpc_network                  = "default"
   sub_network                  = "default"
-  vpc_id                       = "projects/iconic-ducking-9999-n0/global/networks/default"
+  vpc_id                       = "projects/iguana-dev-env/global/networks/default"
   deletion_protection          = false
   jenkins_instance_type        = "e2-medium"
   jenkins_disk_size            = 50
@@ -54,9 +54,23 @@ inputs = {
 }
 
 generate "provider" {
-  path      = "provider.tf"
+  path      = "main.tf"
   if_exists = "overwrite"
   contents  = <<EOF
+terraform {
+  backend "gcs" {
+    bucket = "dev-bucket-general"
+    prefix = "terraform/dev"
+  }
+  required_version = ">= 1.8.4"
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.30.0"
+    }
+  }
+}
+
 provider "google" {
   project = var.project
   region  = var.region
@@ -67,19 +81,6 @@ provider "google-beta" {
   project = var.project
   region  = var.region
   zone    = var.zone
-}
-EOF
-}
-
-generate "backend" {
-  path      = "backend.tf"
-  if_exists = "overwrite"
-  contents  = <<EOF
-terraform {
-  backend "gcs" {
-    bucket = "unique-project-geo-tf-state"
-    prefix = "terraform/${path_relative_to_include()}"
-  }
 }
 EOF
 }

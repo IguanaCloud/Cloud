@@ -6,7 +6,7 @@ resource "google_compute_region_backend_service" "geo" {
     capacity_scaler = 1.0
     max_utilization = 0.8
   }
-  name        = "${var.env}-${var.region}-${var.app}-geocitizen-backend-service"
+  name        = "${local.full_name}-geocitizen-backend-service"
   protocol    = "HTTP"
   timeout_sec = 10
   health_checks = [google_compute_region_health_check.geo.id]
