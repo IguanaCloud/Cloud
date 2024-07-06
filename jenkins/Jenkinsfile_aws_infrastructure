@@ -1,0 +1,56 @@
+pipeline {
+    agent any
+	tools {
+      terraform 'terraform'
+    }
+    stages {
+        stage('Setup Tools') {
+            steps {
+                sh """
+                wget https://github.com/gruntwork-io/terragrunt/releases/download/${TERRAGRUNT_VERSION}/terragrunt_linux_amd64
+                chmod +x terragrunt_linux_amd64
+                mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
+                """
+
+                sh """
+                wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+                unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+                chmod +x terraform
+                mv terraform /usr/local/bin/terraform
+                """
+            }
+        }
+        stage('Terragrunt Init') {
+            steps {
+                script {
+                    dir('/terraform/aws') {
+                        sh 'terragrunt run-all init'
+                    }
+                }
+            }
+        }
+        stage('Terragrunt Plan') {
+            steps {
+                script {
+                    dir('/terraform/aws') {
+                        sh 'terragrunt run-all plan'
+                    }
+                }
+            }
+        }
+        stage('Terragrunt Apply') {
+            steps {
+                script {
+                    dir('/terraform/aws') {
+                        sh 'terragrunt run-all apply -auto-approve'
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
