@@ -17,8 +17,8 @@ generate "provider" {
   contents  = <<EOF
 terraform {
   backend "gcs" {
-    bucket = "dev-bucket-general"
-    prefix = "terraform/dev"
+    bucket = "prod-bucket-general"
+    prefix = "terraform/prod"
   }
   required_version = ">= 1.8.4"
   required_providers {
