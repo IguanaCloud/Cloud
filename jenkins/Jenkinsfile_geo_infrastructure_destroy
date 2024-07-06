@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+	tools {
+      terraform 'terraform'
+    }
+	parameters {
+        choice(name: 'ENV', choices: ['dev', 'stage', 'prod'], description: 'Deployment environment')
+		string(name: 'ENV_VARIABLE', defaultValue: '01', description: 'ENV Variable')
+		choice(name: 'REGION', choices: ['europe', 'us'], description: 'Select the region')
+        choice(name: 'ZONE', choices: ['north1', 'central1', 'east1'], description: 'Select the zone')
+        choice(name: 'PROJECT_NAME', choices: ['geo', 'gogs', 'awx'], description: 'Project name')
+    }
+    stages {
+        stage('Init and Plan'){
+			steps {
+				script {
+                    def environmentProjects = "${params.ENV}-${params.ENV_VARIABLE}-${params.REGION}-${params.ZONE}-${params.PROJECT_NAME}"
+                    echo "Selected environment ${params.PROJECT_NAME}: ${environmentProjects}"
+					env.GEO_ENV = environmentProjects
+                }
+			    withCredentials([file(credentialsId: 'GCP-iguana-${params.ENV}-env', variable: 'GOOGLE_CREDENTIALS')]) {
+			        dir('terraform/GCP/workspace_vars') {
+					
+			            sh 'make plan'
+			        }
+			    }
+			}
+		}
+		stage('Destroy') {
+            input {
+                message "Do you want to destroy the infrastructure?"
+                ok "Destroy"
+            }
+            steps {
+                withCredentials([file(credentialsId: 'GCP-iguana-${params.ENV}-env', variable: 'GOOGLE_CREDENTIALS')]) {
+                    dir('terraform/GCP/workspace_vars') {
+			            sh 'make destroy'
+			        }
+                }
+            }
+       	}
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
