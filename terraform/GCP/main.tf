@@ -2,7 +2,7 @@
 terraform {
   backend "gcs" {
     bucket = "stage-bucket-general"
-    prefix = "terraform/dev"
+    prefix = "terraform/stage"
   }
   required_version = ">= 1.8.4"
   required_providers {
