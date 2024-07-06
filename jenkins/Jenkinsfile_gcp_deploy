@@ -1,0 +1,108 @@
+pipeline {
+    agent any
+    environment {
+        WORKING_DIR = "${WORKSPACE}/terraform/GCP"
+    }
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main', url: "https://github.com/IguanaCloud/Cloud"
+            }
+        }
+        stage('Select Credentials') {
+            steps {
+                script {
+                    def selectedCredentials = input(
+                        id: 'userInput', message: 'Select credentials to use', parameters: [
+                        choice(name: 'CREDENTIALS_ID', choices: ['GOOGLE_CREDENTIALS_ID_dev', 'GOOGLE_CREDENTIALS_ID_stage', 'GOOGLE_CREDENTIALS_ID_prod'], description: 'Select Google Credentials ID')
+                    ])
+                    env.SELECTED_CREDENTIALS_FILE = selectedCredentials
+
+                    def branchName = ''
+                    if (selectedCredentials == 'GOOGLE_CREDENTIALS_ID_dev') {
+                        branchName = 'dev'
+                    } else if (selectedCredentials == 'GOOGLE_CREDENTIALS_ID_stage') {
+                        branchName = 'stage'
+                    } else if (selectedCredentials == 'GOOGLE_CREDENTIALS_ID_prod') {
+                        branchName = 'prod'
+                    }
+                    echo "Switching to branch: ${branchName}"
+                    sh "git checkout ${branchName}"
+                }
+            }
+        }
+        stage('Terraform format') {
+            steps {
+                echo 'Terraform format'
+                dir("${WORKING_DIR}") {
+                    sh 'terraform fmt'
+                }
+            }
+        }
+        stage('Terraform init') {
+            steps {
+                echo 'Terraform init'
+                withCredentials([file(credentialsId: env.SELECTED_CREDENTIALS_FILE, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    dir("${WORKING_DIR}") {
+                        sh 'make init'
+                    }
+                }
+            }
+        }
+        stage('Terraform validate') {
+            steps {
+                echo 'Terraform validate'
+                withCredentials([file(credentialsId: env.SELECTED_CREDENTIALS_FILE, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    dir("${WORKING_DIR}") {
+                        sh 'terraform validate'
+                    }
+                }
+            }
+        }
+        stage('Terraform Plan') {
+            steps {
+                echo 'Terraform plan'
+                withCredentials([file(credentialsId: env.SELECTED_CREDENTIALS_FILE, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    dir("${WORKING_DIR}") {
+                        sh 'make plan'
+                    }
+                }
+            }
+        }
+        stage('Terraform apply') {
+            input {
+                message 'Do you want to apply infrastructure?'
+                ok 'Yes'
+                parameters {
+                    booleanParam(defaultValue: false, description: 'Do you really want to apply infrastructure (By default "No" )?', name: 'APPLY')
+                }
+            }
+            steps {
+                script {
+                    echo 'Terraform apply'
+                    dir("${WORKING_DIR}") {
+                        retry(3) {
+                            try {
+                                withCredentials([file(credentialsId: env.SELECTED_CREDENTIALS_FILE, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                                    sh 'make apply'
+                                }
+                            } catch (Exception e) {
+                                echo 'Retrying Terraform apply due to an error...'
+                                sleep 10
+                                withCredentials([file(credentialsId: env.SELECTED_CREDENTIALS_FILE, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                                    sh 'make apply'
+                                }
+                                throw e
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
