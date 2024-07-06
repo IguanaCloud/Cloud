@@ -1,5 +1,5 @@
 project = "iguana-dev-env"
-env     = "dev-01"
-region  = "us-east1"
-zone    = "us-east1-b"
+env     = "prod-01"
+region  = "us-west4"
+zone    = "us-west4-a"
 app     = "gcp"
