@@ -5,7 +5,7 @@ resource "random_password" "geo_db_user_pass" {
 }
 
 resource "google_secret_manager_secret" "database_credentials" {
-  secret_id = "${var.env}-${var.region}-${var.app}-db-cred"
+  secret_id = "${var.env}-${var.region}-${var.app}-cred-geo"
 
   labels = {
     env      = var.env

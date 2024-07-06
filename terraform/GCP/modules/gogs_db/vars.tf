@@ -24,5 +24,5 @@ variable "project" {
 }
 
 locals {
-  full_name  = "${var.env}-${var.region}-${var.app}"
+  full_name = "${var.env}-${var.region}-${var.app}"
 }

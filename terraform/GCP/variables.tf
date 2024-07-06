@@ -22,8 +22,3 @@ variable "app" {
   type        = string
   description = "The name of the application."
 }
-
-variable "allowed_ips" {
-  type        = list(string)
-  description = "The list of allowed IP addresses."
-}

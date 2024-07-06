@@ -6,7 +6,7 @@ resource "google_compute_instance_group_manager" "geo" {
     name              = "primary"
   }
   base_instance_name = "${local.full_name}-webapp-application"
-  target_size        = 1
+  target_size        = 3
 
   named_port {
     name = "http"

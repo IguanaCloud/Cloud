@@ -4,9 +4,10 @@ resource "google_compute_instance_template" "geo_template" {
   network_interface {
     network    = var.vpc_network
     subnetwork = var.geo_sub_network
+    access_config {}
   }
   disk {
-    source_image ="projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts"
+    source_image = "projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts"
     auto_delete  = true
     boot         = true
   }

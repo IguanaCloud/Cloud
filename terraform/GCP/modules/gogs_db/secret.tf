@@ -5,7 +5,7 @@ resource "random_password" "gogs_db_user_pass" {
 }
 
 resource "google_secret_manager_secret" "database_credentials" {
-  secret_id = "${local.full_name}-db-cred"
+  secret_id = "${local.full_name}-cred-gogs"
 
   labels = {
     env      = var.env

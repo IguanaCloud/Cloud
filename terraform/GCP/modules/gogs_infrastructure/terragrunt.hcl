@@ -11,7 +11,3 @@ terraform {
     ]
   }
 }
-
-inputs = {
-  
-}
