@@ -4,7 +4,6 @@ include "root" {
 
 terraform {
   source = "."
-  
   extra_arguments "common_vars" {
     commands = ["apply", "plan", "destroy"]
     arguments = [
