@@ -1,0 +1,103 @@
+pipeline {
+    agent any
+    environment {
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('GOOGLE_CREDENTIALS_ID')
+        WORKING_DIR = "${WORKSPACE}/terraform/GCP/modules/helm_gitea"
+        TF_VAR_username = credentials('helm_user')
+        TF_VAR_password = credentials('helm_password')
+        TF_VAR_mail = credentials('helm_mail')
+        TF_VAR_registry_url = credentials('helm-url')
+        TF_VAR_helm_repo = credentials('helm-chart-repo')
+        TF_VAR_helm_chart = credentials('helm-chart-name')
+        TF_VAR_registry_domain = credentials('helm-domain')
+    }
+    stages {
+        stage('Setup Environment') {
+            steps {
+                script {
+                    env.DEPLOY_STAGE = input(id: 'DeploymentStage', message: 'Select the deployment stage:', ok: 'Submit',
+                        parameters: [choice(name: 'DEPLOY_STAGE', choices: ['dev', 'stage', 'prod'], description: 'Choose your deployment stage:')]
+                    )
+                }
+            }
+        }
+        stage('Fetch Clusters') {
+            steps {
+                script {
+                    switch (env.DEPLOY_STAGE) {
+                        case 'dev':
+                            echo 'Fetching clusters for development environment'
+                            sh 'gcloud container clusters get-credentials dev-01-us-east1-gcp-gogs-kubernetes --zone us-east1-b --project iguana-dev-env'
+                            break
+                        case 'stage':
+                            echo 'Fetching clusters for staging environment'
+                            sh 'gcloud container clusters get-credentials stage-01-us-west1-gcp-gogs-kubernetes --zone us-west1-b --project iguana-stage-env'
+                            break
+                        case 'prod':
+                            echo 'Fetching clusters for production environment'
+                            sh 'gcloud container clusters get-credentials prod-01-us-west4-gcp-gogs-kubernetes --zone us-west4-a --project iguana-prod-env'
+                            break
+                    }
+                }
+            }
+        }
+        stage('Terraform format') {
+            steps {
+                echo 'Terraform format'
+                dir("${WORKING_DIR}") {
+                    sh 'terraform fmt'
+                }
+            }
+        }
+        stage('Terraform init') {
+            steps {
+                echo 'Terraform init'
+                dir("${WORKING_DIR}") {
+                    sh 'terragrunt init'
+                }
+            }
+        }
+        stage('Terraform validate') {
+            steps {
+                echo 'Terraform validate'
+                dir("${WORKING_DIR}") {
+                    sh 'terraform validate'
+                }
+            }
+        }
+        stage('Terraform Plan') {
+            steps {
+                echo 'Terraform plan'
+                dir("${WORKING_DIR}") {
+                    sh 'terragrunt plan'
+                }
+            }
+        }
+        stage('Terraform apply') {
+            input {
+                message 'Do you want to apply infrastructure?'
+                ok 'Yes'
+                parameters {
+                    booleanParam(defaultValue: false, description: 'Do you really want to apply infrastructure (By default "No")?', name: 'APPLY')
+                }
+            }
+            steps {
+                script {
+                    if (env.APPLY) {
+                        echo 'Applying Terraform'
+                        dir("${WORKING_DIR}") {
+                            sh 'terragrunt apply'
+                        }
+                    } else {
+                        echo 'Skipping Terraform apply'
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
