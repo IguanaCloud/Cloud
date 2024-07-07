@@ -1,4 +1,4 @@
-project = "iguana-dev-env"
+project = "iguana-prod-env"
 env     = "prod-01"
 region  = "us-west4"
 zone    = "us-west4-a"
