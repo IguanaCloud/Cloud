@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+
+    environment {
+        JFROG_CLI_OFFER_CONFIG = "false"
+    }
+
+    stages {
+        stage('Clone') {
+            steps {
+                git branch: 'main', url: "https://github.com/Yura11/gogs-infrastructure"
+            }
+        }
+        stage('Prepare Helm Chart') {
+            steps {
+                withCredentials([file(credentialsId: 'helm-values-file-id', variable: 'HELM_VALUES')]) {
+                    script {
+                        dir('gogs-infrastructure/helm/gogs-chart/gogs-chart') {
+                            sh 'cp $HELM_VALUES values.yaml'
+                        }
+                    }
+                }
+            }
+        }
+        stage('Package Helm Chart') {
+            steps {
+                script {
+                    dir('helm/gogs-chart') {
+                        sh 'helm package gogs-chart'
+                    }
+                }
+            }
+        }
+        stage('Push Helm Chart') {
+            steps {
+                script {
+                    dir('helm/gogs-chart') {
+                        sh 'jfrog rt u "gogsapp-0.1.0.tgz" "gogs-helm-local/"'
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
