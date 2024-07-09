@@ -25,7 +25,6 @@ pipeline {
                     } else if (env.CREDENTIALS_ID == 'GOOGLE_CREDENTIALS_ID_prod') {
                         env.BRANCH_NAME = 'prod'
                     }
-                    echo "Using branch: ${env.BRANCH_NAME} with credentials: ${env.CREDENTIALS_ID}"
                 }
             }
         }
