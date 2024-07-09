@@ -73,23 +73,26 @@ pipeline {
                 }
             }
         }
-        stage('Terraform apply') {
+        stage('Terraform Apply or Destroy') {
             input {
-                message 'Do you want to apply infrastructure?'
-                ok 'Yes'
+                message 'Choose action for Terraform:'
+                ok 'Submit'
                 parameters {
-                    booleanParam(defaultValue: false, description: 'Do you really want to apply infrastructure (By default "No")?', name: 'APPLY')
+                    choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Do you want to apply or destroy infrastructure?')
                 }
             }
             steps {
                 script {
-                    if (env.APPLY) {
-                        echo 'Applying Terraform'
+                    if (env.ACTION == 'apply') {
+                        echo 'Applying Terraform configuration'
                         dir("${WORKING_DIR}") {
-                            sh 'terragrunt apply'
+                            sh 'make apply'
                         }
-                    } else {
-                        echo 'Skipping Terraform apply'
+                    } else if (env.ACTION == 'destroy') {
+                        echo 'Destroying Terraform configuration'
+                        dir("${WORKING_DIR}") {
+                            sh 'make destroy'
+                        }
                     }
                 }
             }
