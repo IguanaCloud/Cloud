@@ -11,48 +11,38 @@ pipeline {
         TF_VAR_registry_domain = credentials('helm-domain')
     }
     stages {
-        stage('Setup Environment') {
+        stage('Select Credentials') {
             steps {
                 script {
-                    env.DEPLOY_STAGE = input(id: 'DeploymentStage', message: 'Select the deployment stage:', ok: 'Submit',
-                        parameters: [choice(name: 'DEPLOY_STAGE', choices: ['dev', 'stage', 'prod'], description: 'Choose your deployment stage:')]
-                    )
-                    if (env.DEPLOY_STAGE == 'dev') {
-                        env.GOOGLE_APPLICATION_CREDENTIALS = credentials('GOOGLE_CREDENTIALS_ID_dev')
-                    } else if (env.DEPLOY_STAGE == 'stage') {
-                        env.GOOGLE_APPLICATION_CREDENTIALS = credentials('GOOGLE_CREDENTIALS_ID_stage')
-                    } else if (env.DEPLOY_STAGE == 'prod') {
-                        env.GOOGLE_APPLICATION_CREDENTIALS = credentials('GOOGLE_CREDENTIALS_ID_prod')
+                    env.CREDENTIALS_ID = input(id: 'userInput', message: 'Select credentials to use', parameters: [
+                        choice(name: 'CREDENTIALS_ID', choices: ['GOOGLE_CREDENTIALS_ID_dev', 'GOOGLE_CREDENTIALS_ID_stage', 'GOOGLE_CREDENTIALS_ID_prod'], description: 'Select Google Credentials ID')
+                    ])
+
+                    if (env.CREDENTIALS_ID == 'GOOGLE_CREDENTIALS_ID_dev') {
+                        env.BRANCH_NAME = 'dev'
+                    } else if (env.CREDENTIALS_ID == 'GOOGLE_CREDENTIALS_ID_stage') {
+                        env.BRANCH_NAME = 'stage'
+                    } else if (env.CREDENTIALS_ID == 'GOOGLE_CREDENTIALS_ID_prod') {
+                        env.BRANCH_NAME = 'prod'
                     }
+                    echo "Using branch: ${env.BRANCH_NAME} with credentials: ${env.CREDENTIALS_ID}"
                 }
             }
         }
         stage('Clone Repository') {
             steps {
                 script {
-                    // Decide the branch based on the deployment stage
-                    def branchName = (env.DEPLOY_STAGE == 'prod') ? 'main' : env.DEPLOY_STAGE
-                    echo "Cloning branch: ${branchName}"
-                    git branch: branchName, url: "https://github.com/IguanaCloud/Cloud"
+                    echo "Cloning branch: ${env.BRANCH_NAME}"
+                    git branch: env.BRANCH_NAME, url: "https://github.com/IguanaCloud/Cloud"
                 }
             }
         }
         stage('Fetch Clusters') {
             steps {
                 script {
-                    switch (env.DEPLOY_STAGE) {
-                        case 'dev':
-                            echo 'Fetching clusters for development environment'
-                            sh 'gcloud container clusters get-credentials dev-01-us-east1-gcp-gogs-kubernetes --zone us-east1-b --project iguana-dev-env'
-                            break
-                        case 'stage':
-                            echo 'Fetching clusters for staging environment'
-                            sh 'gcloud container clusters get-credentials stage-01-us-west1-gcp-gogs-kubernetes --zone us-west1-b --project iguana-stage-env'
-                            break
-                        case 'prod':
-                            echo 'Fetching clusters for production environment'
-                            sh 'gcloud container clusters get-credentials prod-01-us-west4-gcp-gogs-kubernetes --zone us-west4-a --project iguana-prod-env'
-                            break
+                    withCredentials([file(credentialsId: env.CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                        echo "Fetching clusters for ${env.BRANCH_NAME} environment"
+                        sh "gcloud container clusters get-credentials ${env.BRANCH_NAME}-01-${env.BRANCH_NAME}1-gcp-gogs-kubernetes --zone us-${env.BRANCH_NAME}1-b --project iguana-${env.BRANCH_NAME}-env"
                     }
                 }
             }
@@ -68,24 +58,30 @@ pipeline {
         stage('Terraform init') {
             steps {
                 echo 'Terraform init'
-                dir("${WORKING_DIR}") {
-                    sh 'make init'
+                withCredentials([file(credentialsId: env.CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    dir("${WORKING_DIR}") {
+                        sh 'make init'
+                    }
                 }
             }
         }
         stage('Terraform validate') {
             steps {
                 echo 'Terraform validate'
-                dir("${WORKING_DIR}") {
-                    sh 'terraform validate'
+                withCredentials([file(credentialsId: env.CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    dir("${WORKING_DIR}") {
+                        sh 'terraform validate'
+                    }
                 }
             }
         }
         stage('Terraform Plan') {
             steps {
                 echo 'Terraform plan'
-                dir("${WORKING_DIR}") {
-                    sh 'make plan'
+                withCredentials([file(credentialsId: env.CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    dir("${WORKING_DIR}") {
+                        sh 'make plan'
+                    }
                 }
             }
         }
@@ -101,20 +97,24 @@ pipeline {
                 script {
                     if (env.ACTION == 'apply') {
                         echo 'Applying Terraform configuration'
-                        dir("${WORKING_DIR}") {
-                            sh 'make apply'
+                        withCredentials([file(credentialsId: env.CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                            dir("${WORKING_DIR}") {
+                                sh 'make apply'
+                            }
                         }
                     } else if (env.ACTION == 'destroy') {
                         echo 'Destroying Terraform configuration'
-                        dir("${WORKING_DIR}") {
-                            sh 'make destroy'
+                        withCredentials([file(credentialsId: env.CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                            dir("${WORKING_DIR}") {
+                                sh 'make destroy'
+                            }
                         }
                     }
                 }
             }
         }
     }
-     post {
+    post {
         always {
             cleanWs()
         }
