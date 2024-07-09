@@ -1,8 +1,7 @@
 pipeline {
     agent any
     environment {
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('GOOGLE_CREDENTIALS_ID')
-        WORKING_DIR = "${WORKSPACE}/terraform/GCP/modules/helm_gitea"
+        WORKING_DIR = "${WORKSPACE}/terraform/GCP/modules/helm_gogs"
         TF_VAR_username = credentials('helm_user')
         TF_VAR_password = credentials('helm_password')
         TF_VAR_mail = credentials('helm_mail')
@@ -18,6 +17,23 @@ pipeline {
                     env.DEPLOY_STAGE = input(id: 'DeploymentStage', message: 'Select the deployment stage:', ok: 'Submit',
                         parameters: [choice(name: 'DEPLOY_STAGE', choices: ['dev', 'stage', 'prod'], description: 'Choose your deployment stage:')]
                     )
+                    if (env.DEPLOY_STAGE == 'dev') {
+                        env.GOOGLE_APPLICATION_CREDENTIALS = credentials('GOOGLE_CREDENTIALS_ID_dev')
+                    } else if (env.DEPLOY_STAGE == 'stage') {
+                        env.GOOGLE_APPLICATION_CREDENTIALS = credentials('GOOGLE_CREDENTIALS_ID_stage')
+                    } else if (env.DEPLOY_STAGE == 'prod') {
+                        env.GOOGLE_APPLICATION_CREDENTIALS = credentials('GOOGLE_CREDENTIALS_ID_prod')
+                    }
+                }
+            }
+        }
+        stage('Clone Repository') {
+            steps {
+                script {
+                    // Decide the branch based on the deployment stage
+                    def branchName = (env.DEPLOY_STAGE == 'prod') ? 'main' : env.DEPLOY_STAGE
+                    echo "Cloning branch: ${branchName}"
+                    git branch: branchName, url: "https://github.com/IguanaCloud/Cloud"
                 }
             }
         }
@@ -100,7 +116,9 @@ pipeline {
     }
     post {
         always {
-            cleanWs()
+            node {
+                cleanWs()
+            }
         }
     }
 }
