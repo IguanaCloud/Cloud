@@ -114,11 +114,9 @@ pipeline {
             }
         }
     }
-    post {
+     post {
         always {
-            node {
-                cleanWs()
-            }
+            cleanWs()
         }
     }
 }
