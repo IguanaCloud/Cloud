@@ -69,7 +69,7 @@ pipeline {
             steps {
                 echo 'Terraform init'
                 dir("${WORKING_DIR}") {
-                    sh 'terragrunt init'
+                    sh 'make init'
                 }
             }
         }
@@ -85,7 +85,7 @@ pipeline {
             steps {
                 echo 'Terraform plan'
                 dir("${WORKING_DIR}") {
-                    sh 'terragrunt plan'
+                    sh 'make plan'
                 }
             }
         }
