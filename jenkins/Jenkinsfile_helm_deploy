@@ -41,8 +41,20 @@ pipeline {
             steps {
                 script {
                     withCredentials([file(credentialsId: env.CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                        echo "Fetching clusters for ${env.BRANCH_NAME} environment"
-                        sh "gcloud container clusters get-credentials ${env.BRANCH_NAME}-01-${env.BRANCH_NAME}1-gcp-gogs-kubernetes --zone us-${env.BRANCH_NAME}1-b --project iguana-${env.BRANCH_NAME}-env"
+                        switch (env.BRANCH_NAME) {
+                            case 'dev':
+                                echo 'Fetching clusters for development environment'
+                                sh 'gcloud container clusters get-credentials dev-01-us-east1-gcp-gogs-kubernetes --zone us-east1-b --project iguana-dev-env'
+                                break
+                            case 'stage':
+                                echo 'Fetching clusters for staging environment'
+                                sh 'gcloud container clusters get-credentials stage-01-us-west1-gcp-gogs-kubernetes --zone us-west1-b --project iguana-stage-env'
+                                break
+                            case 'prod':
+                                echo 'Fetching clusters for production environment'
+                                sh 'gcloud container clusters get-credentials prod-01-us-west4-gcp-gogs-kubernetes --zone us-west4-a --project iguana-prod-env'
+                                break
+                        }
                     }
                 }
             }
