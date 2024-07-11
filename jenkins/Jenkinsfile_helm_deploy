@@ -1,8 +1,7 @@
 pipeline {
     agent any
     environment {
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('GOOGLE_CREDENTIALS_ID')
-        WORKING_DIR = "${WORKSPACE}/terraform/GCP/modules/helm_gitea"
+        WORKING_DIR = "${WORKSPACE}/terraform/GCP/modules/helm_gogs"
         TF_VAR_username = credentials('helm_user')
         TF_VAR_password = credentials('helm_password')
         TF_VAR_mail = credentials('helm_mail')
@@ -12,31 +11,49 @@ pipeline {
         TF_VAR_registry_domain = credentials('helm-domain')
     }
     stages {
-        stage('Setup Environment') {
+        stage('Select Credentials') {
             steps {
                 script {
-                    env.DEPLOY_STAGE = input(id: 'DeploymentStage', message: 'Select the deployment stage:', ok: 'Submit',
-                        parameters: [choice(name: 'DEPLOY_STAGE', choices: ['dev', 'stage', 'prod'], description: 'Choose your deployment stage:')]
-                    )
+                    env.CREDENTIALS_ID = input(id: 'userInput', message: 'Select credentials to use', parameters: [
+                        choice(name: 'CREDENTIALS_ID', choices: ['GOOGLE_CREDENTIALS_ID_dev', 'GOOGLE_CREDENTIALS_ID_stage', 'GOOGLE_CREDENTIALS_ID_prod'], description: 'Select Google Credentials ID')
+                    ])
+
+                    if (env.CREDENTIALS_ID == 'GOOGLE_CREDENTIALS_ID_dev') {
+                        env.BRANCH_NAME = 'dev'
+                    } else if (env.CREDENTIALS_ID == 'GOOGLE_CREDENTIALS_ID_stage') {
+                        env.BRANCH_NAME = 'stage'
+                    } else if (env.CREDENTIALS_ID == 'GOOGLE_CREDENTIALS_ID_prod') {
+                        env.BRANCH_NAME = 'prod'
+                    }
+                }
+            }
+        }
+        stage('Clone Repository') {
+            steps {
+                script {
+                    echo "Cloning branch: ${env.BRANCH_NAME}"
+                    git branch: env.BRANCH_NAME, url: "https://github.com/IguanaCloud/Cloud"
                 }
             }
         }
         stage('Fetch Clusters') {
             steps {
                 script {
-                    switch (env.DEPLOY_STAGE) {
-                        case 'dev':
-                            echo 'Fetching clusters for development environment'
-                            sh 'gcloud container clusters get-credentials dev-01-us-east1-gcp-gogs-kubernetes --zone us-east1-b --project iguana-dev-env'
-                            break
-                        case 'stage':
-                            echo 'Fetching clusters for staging environment'
-                            sh 'gcloud container clusters get-credentials stage-01-us-west1-gcp-gogs-kubernetes --zone us-west1-b --project iguana-stage-env'
-                            break
-                        case 'prod':
-                            echo 'Fetching clusters for production environment'
-                            sh 'gcloud container clusters get-credentials prod-01-us-west4-gcp-gogs-kubernetes --zone us-west4-a --project iguana-prod-env'
-                            break
+                    withCredentials([file(credentialsId: env.CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                        switch (env.BRANCH_NAME) {
+                            case 'dev':
+                                echo 'Fetching clusters for development environment'
+                                sh 'gcloud container clusters get-credentials dev-01-us-east1-gcp-gogs-kubernetes --zone us-east1-b --project iguana-dev-env'
+                                break
+                            case 'stage':
+                                echo 'Fetching clusters for staging environment'
+                                sh 'gcloud container clusters get-credentials stage-01-us-west1-gcp-gogs-kubernetes --zone us-west1-b --project iguana-stage-env'
+                                break
+                            case 'prod':
+                                echo 'Fetching clusters for production environment'
+                                sh 'gcloud container clusters get-credentials prod-01-us-west4-gcp-gogs-kubernetes --zone us-west4-a --project iguana-prod-env'
+                                break
+                        }
                     }
                 }
             }
@@ -52,44 +69,57 @@ pipeline {
         stage('Terraform init') {
             steps {
                 echo 'Terraform init'
-                dir("${WORKING_DIR}") {
-                    sh 'terragrunt init'
+                withCredentials([file(credentialsId: env.CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    dir("${WORKING_DIR}") {
+                        sh 'make init'
+                    }
                 }
             }
         }
         stage('Terraform validate') {
             steps {
                 echo 'Terraform validate'
-                dir("${WORKING_DIR}") {
-                    sh 'terraform validate'
+                withCredentials([file(credentialsId: env.CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    dir("${WORKING_DIR}") {
+                        sh 'terraform validate'
+                    }
                 }
             }
         }
         stage('Terraform Plan') {
             steps {
                 echo 'Terraform plan'
-                dir("${WORKING_DIR}") {
-                    sh 'terragrunt plan'
+                withCredentials([file(credentialsId: env.CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    dir("${WORKING_DIR}") {
+                        sh 'make plan'
+                    }
                 }
             }
         }
-        stage('Terraform apply') {
+        stage('Terraform Apply or Destroy') {
             input {
-                message 'Do you want to apply infrastructure?'
-                ok 'Yes'
+                message 'Choose action for Terraform:'
+                ok 'Submit'
                 parameters {
-                    booleanParam(defaultValue: false, description: 'Do you really want to apply infrastructure (By default "No")?', name: 'APPLY')
+                    choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Do you want to apply or destroy infrastructure?')
                 }
             }
             steps {
                 script {
-                    if (env.APPLY) {
-                        echo 'Applying Terraform'
-                        dir("${WORKING_DIR}") {
-                            sh 'terragrunt apply'
+                    if (env.ACTION == 'apply') {
+                        echo 'Applying Terraform configuration'
+                        withCredentials([file(credentialsId: env.CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                            dir("${WORKING_DIR}") {
+                                sh 'make apply'
+                            }
                         }
-                    } else {
-                        echo 'Skipping Terraform apply'
+                    } else if (env.ACTION == 'destroy') {
+                        echo 'Destroying Terraform configuration'
+                        withCredentials([file(credentialsId: env.CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                            dir("${WORKING_DIR}") {
+                                sh 'make destroy'
+                            }
+                        }
                     }
                 }
             }
