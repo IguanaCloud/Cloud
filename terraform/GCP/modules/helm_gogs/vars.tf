@@ -17,16 +17,19 @@ variable "mail" {
 variable "env" {
   description = "The Working environment"
   type        = string
+  default     = "prod-01"
 }
 
 variable "app" {
   description = "The application name"
   type        = string
+  default     = "gcp"
 }
 
 variable "region" {
   description = "The default region to deploy infrastructure"
   type        = string
+  default     = "us-west4"
 }
 
 variable "registry_url" {
