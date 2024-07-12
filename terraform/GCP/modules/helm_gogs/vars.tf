@@ -48,3 +48,8 @@ variable "registry_domain" {
   description = "URL of the Docker registry"
   type        = string
 }
+
+variable "project" {
+  type    = string
+  default = "iguana-prod-env"
+}
