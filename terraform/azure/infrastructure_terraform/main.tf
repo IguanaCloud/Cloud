@@ -1,11 +1,23 @@
-
-module "azure_instance" {
-    source = "./modules/instance"
-    network_interface = module.azure_network.main_network_interface
-    resource_group = azurerm_resource_group.main
+terraform {
+  required_version = ">= 1.8.4"
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.30.0"
+    }
+  }
 }
 
-module "azure_network" {
-    source = "./modules/network"
-    resource_group = azurerm_resource_group.main
+provider "azurerm" {
+  features {}
 }
+
+
+
+
+
+
+
+
+
+
