@@ -17,4 +17,5 @@ dependency "aws_key_pair" {
 inputs = {
   subnet_id = dependency.vpc.outputs.public_subnet_1
   key_pair  = dependency.aws_key_pair.outputs.key_pair
+  sec_gr = dependency.vpc.outputs.sec_groups
 }

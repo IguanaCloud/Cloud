@@ -9,3 +9,6 @@ output "public_subnet_1" {
   value = aws_subnet.public-subnet-1.id
   
 }
+output "sec_groups" {
+  value = aws_security_group.web-sg.id
+}

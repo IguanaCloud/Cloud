@@ -5,3 +5,7 @@ variable "key_pair" {
 variable "subnet_id" {
   type = string
 }
+
+variable "sec_gr" {
+  type = string
+}
