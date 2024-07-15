@@ -76,8 +76,9 @@ Resources:
 
           # Clone and run a sample application
           cd /home/ec2-user
-          git clone https://github.com/CapybaraDevOps/flask-repo.git
-          cd flask-repo
+          git clone https://github.com/IguanaCloud/Cloud.git
+          cd Cloud
+          cd flask-app
           chmod +x cred.py
           python3 cred.py
           docker-compose --file docker-compose.yml up -d
