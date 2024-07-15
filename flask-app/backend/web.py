@@ -78,15 +78,6 @@ def identify_required(f):
             return redirect('/')
     return wrap
 
-def clinet_declined(f):
-    @wraps(f)
-    def wrap(*args, **kwardgs):
-        if session['client']['status'] == 'declined':
-            return redirect('/client/decline/dashboard/')
-        else:
-            return f(*args, **kwardgs)
-    return wrap
-
 ############## Modules ##############
 from modules import routes
 from modules.client import Client
@@ -97,8 +88,6 @@ UserAdmin().signup(name=app.config['ADMIN_USER'], email=app.config['ADMIN_EMAIL'
 
 @app.route('/')
 def home():
-    if Client().client_exist():
-        return redirect('/client/dashboard')
     return render_template('home.html')
 
 ############## Users HTML ##############
@@ -123,24 +112,6 @@ def login():
 def registry():
     return render_template('user/registry.html')
 
-############## Clients HTML ##############
-
-@app.route('/client/dashboard/')
-@clinet_declined
-@identify_required
-def client_dashboard():
-    data_db = Client().fetch_data()
-    return render_template('client/dashboard.html', data_db=data_db )
-
-@app.route('/client/updatedata/')
-@clinet_declined
-@identify_required
-def client_update_data():
-    return render_template('client/update.html')
-
-@app.route('/client/decline/dashboard/')
-@identify_required
-def client_dashboard_decline():
-    if Client().check_if_decline():
-        return redirect('/client/dashboard')
-    return render_template('client/dashboard_decline.html')
+@app.route('/user/admin/roleupdate/<id>')
+def user_role_update(id):
+    return render_template('user/role_update.html', id=id)

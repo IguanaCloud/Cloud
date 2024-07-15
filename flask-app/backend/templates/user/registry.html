@@ -1,33 +1,30 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="card-wrapper-first">
-
-        <div class="card">
-
-            <h1 class="center blackfont">Create an Acount</h1>
-
-            <form name="signup_form">
-
-                <label for="name">Username</label>
-                <input type="text" name="name" class="field" required>
-
-                <label for="email">Email</label>
-                <input type="email" name="email" class="field" required>
-
-                <label for="password">Password</label>
-                <input type="password" name="password" class="field" required>
-
-                <p class="error error--hidden"></p>
-
-                <div class="center">
-                    <input type="submit" value="Sign Up" class="btn">
-                    <a href="/user/login" class="btn">Log In</a>
-                </div>
-            </form>
+<div class="d-flex justify-content-center align-items-center vh-100">
+  <div class="card text-center p-4" style="width: 350px;">
+    <div class="card-body">
+      <h1 class="card-title mb-4">Create an Account</h1>
+      <form name="signup_form">
+        <div class="form-group">
+          <label for="name">Username</label>
+          <input type="text" name="name" class="form-control" required>
         </div>
-        <div class="card-signup">
-            <a href="/" class="btn btn--secondary center">Home</a>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" name="email" class="form-control" required>
         </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" name="password" class="form-control" required>
+        </div>
+        <p class="error error--hidden"></p>
+        <div class="text-center">
+          <input type="submit" value="Sign Up" class="btn btn-primary btn-block">
+          <a href="/user/login" class="btn btn-secondary btn-block mt-2">Log In</a>
+        </div>
+      </form>
     </div>
+  </div>
+</div>
 {% endblock %}

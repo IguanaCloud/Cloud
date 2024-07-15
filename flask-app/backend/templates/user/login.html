@@ -1,34 +1,27 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-    <div class="card-wrapper-first">
-        <div class="card">
-
-            <h1 class="center blackfont">Log In</h1>
-
-            <form name="login_form">
-
-                <label for="name">Username/Email</label>
-                <input type="text" name="name" class="field" required>
-
-                <label for="password">Password</label>
-                <input type="password" name="password" class="field" required>
-
-                <p class="error error--hidden"></p>
-
-                <div class="center">
-                    <input type="submit" value="Log In" class="btn">
-                    <a href="/user/registry" class="btn">Sign up</a>                
-                </div>
-            </form>
-                
-         
-            
-            
+<div class="d-flex justify-content-center align-items-center vh-100">
+  <div class="card text-center p-4" style="width: 350px;">
+    <div class="card-body">
+      <h1 class="card-title mb-4">Log In</h1>
+      <form name="login_form">
+        <div class="form-group">
+          <label for="name">Username/Email</label>
+          <input type="text" name="name" class="form-control" required>
         </div>
-            <div class="card-signup">
-                <a href="/" class="btn btn--secondary center">Home</a>
-            </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" name="password" class="form-control" required>
+        </div>
+        <p class="error error--hidden"></p>
+        <div class="text-center">
+          <input type="submit" value="Log In" class="btn btn-primary btn-block">
+          <a href="/user/registry" class="btn btn-secondary btn-block mt-2">Sign up</a>
+        </div>
+      </form>
+      
     </div>
+  </div>
+</div>
 {% endblock %}

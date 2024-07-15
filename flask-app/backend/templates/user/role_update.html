@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-3">
+      <div class="list-group">
+        <a href="/admin/dashboard" class="list-group-item list-group-item-action">Admin Dashboard</a>
+        <a href="/admin/services" class="list-group-item list-group-item-action">Services</a>
+        <a href="/admin/roles" class="list-group-item list-group-item-action active">Roles</a>
+      </div>
+    </div>
+    <div class="col-md-9">
+      <div class="d-flex justify-content-end mb-3">
+        <a href="/user/signout" class="btn btn-warning">Sign Out</a>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <h2 class="card-title text-center">Type Information</h2>
+          <form name="update_form" method="POST" action="/user/admin/update_roles/{{ id }}">
+            <div class="mb-3">
+              <label for="rolename" class="form-label">Role name:</label>
+              <select name="rolename" id="rolename" class="form-select">
+                {% for role in role_data %}
+                <option value="{{ role['name'] }}">{{ role['name'] }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="text-center">
+              <input type="submit" value="Submit" class="btn btn-primary">
+              <a href="/user/dashboard/admin" class="btn btn-secondary">Dashboard</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
