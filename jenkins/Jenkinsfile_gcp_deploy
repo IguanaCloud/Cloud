@@ -84,13 +84,13 @@ pipeline {
                         retry(3) {
                             try {
                                 withCredentials([file(credentialsId: env.SELECTED_CREDENTIALS_FILE, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                                    sh 'make apply'
+                                    sh 'make destroy'
                                 }
                             } catch (Exception e) {
                                 echo 'Retrying Terraform apply due to an error...'
                                 sleep 10
                                 withCredentials([file(credentialsId: env.SELECTED_CREDENTIALS_FILE, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                                    sh 'make apply'
+                                    sh 'make destroy'
                                 }
                                 throw e
                             }
